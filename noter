@@ -1,0 +1,9 @@
+Start mongo:
+
+	gå til node2 mappe - mongod --dbpath data/
+
+
+	start mongo tool: mongo -> use node2
+
+
+

@@ -1,0 +1,10 @@
+extends layout
+
+block content
+	h1.
+		User list:
+	ul
+		each user, i in userlist
+			li(id=user._id)= user.username 
+				span(class="deleteUserBtn") &nbsp;X
+    
