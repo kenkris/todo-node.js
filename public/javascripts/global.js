@@ -1,29 +1,32 @@
 //  Global js functions
 
+var socket = io.connect();
+
+
 $(document).ready(function(){
 
-
-	var socket = io.connect();
-
+	socket.on("addItemToList", function(itemObj){
+		$("#todoListContainer").prepend(markupItemRow(itemObj));
+	});
 
 	var todoList = new TodoList();
 	todoList.getTodoList($("#todoListContainer"));
 
-	$("#addItemBtn").on("click", function(){
+	$("#addItemForm").on("submit", function(event){
+		event.preventDefault();
 		var addItemField = $("#addItemField");
 		var item = new Item($.trim(addItemField.val()));
-
-		if(item != ""){
-			todoList.addItemToList(item);			
+		if(item.description != ""){
+			todoList.addItemToList($("#todoListContainer"), item);
 		}
 		else{
 			alert("NOT VALID!");
 		}
 	});
 
-
-
-
+	$("#testerBtn").on("click", function(){
+		sendTest();
+	});
 
 
 });
@@ -39,8 +42,8 @@ $(document).ready(function(){
 function Item (description){
 	this.id = "";
 	this.description = description;
-	this.checked = false;
 	this.deleted = false;
+	this.crtDate = "";
 }
 
 /**
@@ -80,26 +83,76 @@ TodoList.prototype.getTodoList = function(container, listId){
 		dataType : "json",
 		success : $.proxy(function(data){  //  make the success callback's context point to TodoList obj. (this)
 			console.log(data);
-			this.id = data[0]._id;
-			this.crtDate = data[0].crtDate;
-			this.chgDate = data[0].chgDate;
+			this.id = data._id;
+			this.crtDate = data.crtDate;
+			this.chgDate = data.chgDate;
+			container.html(markupTodoList(data));
 		}, this)
 	});
 }
 
-TodoList.prototype.addItemToList = function(item){
-	console.log(this);
-	console.log(item);
+TodoList.prototype.addItemToList = function(container, item){
+
 	$.ajax({
 		cache : false,
 		type : "POST",
 		url  : "/todo/todolist/",
 		data : {item : item, listId : this.id},
-		success : function(data){
-			console.log(data)
+		success : function(data){  //  data is the proccesed item with an _id
+			if(data){
+				$("#addItemField").val("");
+				if(data.alreadyAdded){
+					alert("findes allerede på listen.");
+				}
+				else{
+					container.prepend(markupItemRow(data));
+					socket.emit("addItemToList", data);  //  Let other clients know.	
+				}				
+			}
 		}
 	});
 }
+
+//  GUI functionality
+function markupTodoList(todoList){
+
+	var html = "";
+	for(var i in todoList.items){
+		console.log(todoList.items[i]);
+		var checked = "";
+		if(todoList.items[i].checked){
+			checked = "checked='checked'";
+		}
+
+		html +=	"<tr id='" + todoList.items[i]._id + "'>" +
+					"<td>" +
+						"<label>" +
+							"<input type='checkbox' " + checked + " /> " + todoList.items[i].description +
+						"</label>" +
+					"</td>" +
+				"</tr>";
+	}
+
+	return html;
+}
+
+function markupItemRow(item){
+
+	var checked = "";
+	if(item.checked){
+		checked = "checked='checked'";
+	}
+	var html =	"<tr id='" + item._id + "'>" +
+					"<td>" +
+						"<label>" +
+							"<input type='checkbox' " + checked + " /> " + item.description +
+						"</label>" +
+					"</td>" +
+				"</tr>";
+
+	return html;
+}
+
 
 /************************************************************************
  * Helper functions
@@ -138,5 +191,4 @@ function getNow(){
 		time : hours + ":" + minutes + ":" + seconds
 	}
 }
-
 

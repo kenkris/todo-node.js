@@ -1,24 +1,14 @@
 extends layout
 
 block content
-	h1 To-do:
-		table
-			thead(id="addItemContainer")
-				tr
-					th
+	h1 Todo:
+	table
+		thead(id="addItemContainer")
+			tr
+				th
+					form(id="addItemForm")
 						input(id="addItemField" type="text")
-					th
-						button(id="addItemBtn" type="button") Add
-			tbody(id="todoListContainer")
-			
+						button(id="addItemBtn" type="submit") Add
+		tbody(id="todoListContainer")
+
 				
-
-
-
-
-
-
-
-
-
-
